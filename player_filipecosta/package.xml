@@ -54,6 +54,8 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>rws2018_libs</build_depend>
   <exec_depend>rws2018_libs</exec_depend>
+  <build_depend>tf</build_depend>
+  <exec_depend>tf</exec_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>

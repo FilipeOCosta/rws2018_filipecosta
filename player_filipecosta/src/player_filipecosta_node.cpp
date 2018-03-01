@@ -9,6 +9,8 @@
 
 #include <rws2018_libs/team.h>
 
+#include <tf/transform_broadcaster.h>
+
 using namespace std;
 
 namespace rws_filipecosta
@@ -75,6 +77,8 @@ public:
   boost::shared_ptr<Team> green_team;
   boost::shared_ptr<Team> blue_team;
 
+  tf::TransformBroadcaster br;  // declare the broadcaster
+
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
     red_team = boost::shared_ptr<Team>(new Team("red"));
@@ -82,6 +86,18 @@ public:
     blue_team = boost::shared_ptr<Team>(new Team("blue"));
 
     setTeamName(argin_team);
+
+    printReport();
+  }
+
+  void move()
+  {
+    tf::Transform transform;  // declare the transformation object
+    transform.setOrigin(tf::Vector3(2, 3, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, M_PI / 4);
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "filipecosta"));
   }
 
   void printReport()
@@ -91,7 +107,7 @@ public:
 };
 }  // end of namespace
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   // std::string player_name = "filipecosta";
   // Creating an instance of class Player
@@ -109,6 +125,19 @@ int main(int argc, char **argv)
   {
     cout << "o filipe esta na equipa certa" << endl;
   };
+
+  // ros::NodeHandle node;
+
+  ros::NodeHandle n;
+
+  ros::Rate loop_rate(10);
+  while (ros::ok())
+  {
+    my_player.move();
+
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 
   ros::spin();
 }
