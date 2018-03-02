@@ -8,7 +8,9 @@
                     "/home/filipe/catkin_ws/devel/include",
                     "/opt/ros/kinetic/include",
                     "/home/filipe/catkin_ws/src/beginner_tutorials/include",
+                    "/home/filipe/catkin_ws/src/rws2018/rws2018_blourenco/player_blourenco/include",
                     "/home/filipe/catkin_ws/src/rws2018/rws2018_filipecosta/player_filipecosta/include",
+                    "/home/filipe/catkin_ws/src/rws2018/rws2018_moliveira/rws2018_libs/include",
                     "/usr/include"
                 ]
             },
@@ -16,7 +18,9 @@
                 "/home/filipe/catkin_ws/devel/include",
                 "/opt/ros/kinetic/include",
                 "/home/filipe/catkin_ws/src/beginner_tutorials/include",
+                "/home/filipe/catkin_ws/src/rws2018/rws2018_blourenco/player_blourenco/include",
                 "/home/filipe/catkin_ws/src/rws2018/rws2018_filipecosta/player_filipecosta/include",
+                "/home/filipe/catkin_ws/src/rws2018/rws2018_moliveira/rws2018_libs/include",
                 "/usr/include"
             ],
             "name": "Linux",

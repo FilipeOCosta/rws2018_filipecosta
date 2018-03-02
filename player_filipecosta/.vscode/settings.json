@@ -10,6 +10,10 @@
         "cstdlib": "cpp",
         "cstring": "cpp",
         "cwchar": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "*.ipp": "cpp",
+        "array": "cpp",
+        "slist": "cpp",
+        "initializer_list": "cpp"
     }
 }
