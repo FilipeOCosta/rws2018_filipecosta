@@ -27,25 +27,25 @@ public:
     name = argin_name;
   }
 
-  string name; // A public atribute
+  string name;  // A public atribute
 
   int setTeamName(int index = 0 /*default value*/)
   {
     switch (index)
     {
-    case 0:
-      return setTeamName("red");
-      break;
-    case 1:
-      return setTeamName("green");
-      break;
-    case 2:
-      return setTeamName("blue");
-      break;
-    default:
-      // cout << "wrong team index given. Cannot set team" << endl;
-      ROS_WARN("wrong team index given. Cannot set team");
-      break;
+      case 0:
+        return setTeamName("red");
+        break;
+      case 1:
+        return setTeamName("green");
+        break;
+      case 2:
+        return setTeamName("blue");
+        break;
+      default:
+        // cout << "wrong team index given. Cannot set team" << endl;
+        ROS_WARN("wrong team index given. Cannot set team");
+        break;
     }
   }
 
@@ -86,7 +86,7 @@ public:
   boost::shared_ptr<Team> my_preys;
   boost::shared_ptr<Team> my_hunters;
 
-  tf::TransformBroadcaster br; // declare the broadcaster
+  tf::TransformBroadcaster br;  // declare the broadcaster
   ros::NodeHandle n;
   boost::shared_ptr<ros::Subscriber> sub;
 
@@ -126,8 +126,24 @@ public:
   void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg)
   {
     static float y = 0;
-    tf::Transform transform; // declare the transformation object
-    transform.setOrigin(tf::Vector3(-8, y += 0.5, 0.0));
+    static int i = 1;
+    tf::Transform transform;  // declare the transformation object
+    if (i == 1)
+    {
+      transform.setOrigin(tf::Vector3(-5, y -= 0.5, 0.0));
+      if (y == -5)
+      {
+        i = 0;
+      }
+    }
+    else
+    {
+      transform.setOrigin(tf::Vector3(-5, y += 0.5, 0.0));
+      if (y == 5)
+      {
+        i = 1;
+      }
+    }
     tf::Quaternion q;
     q.setRPY(0, 0, M_PI / 4);
     transform.setRotation(q);
@@ -145,7 +161,7 @@ public:
     // ROS_ERROR("My name is %s and my team is %s", name.c_str(), (getTeamName().c_str()));
   }
 };
-} // end of namespace
+}  // end of namespace
 
 int main(int argc, char **argv)
 {
@@ -163,19 +179,19 @@ int main(int argc, char **argv)
 
   rws_filipecosta::MyPlayer my_player("filipecosta", "green");
 
-  //if (my_player.red_team->playerBelongsToTeam("filipecosta"))
+  // if (my_player.red_team->playerBelongsToTeam("filipecosta"))
   //{
   // cout << "o filipe esta na equipa certa" << endl;
   // ROS_INFO("o filipe esta na equipa certa");
   //};
 
-  //ros::Rate loop_rate(10);
-  //while (ros::ok())
+  // ros::Rate loop_rate(10);
+  // while (ros::ok())
   //{
   // my_player.move();
 
-  //ros::spinOnce();
-  //loop_rate.sleep();
+  // ros::spinOnce();
+  // loop_rate.sleep();
   //}
 
   ros::spin();
