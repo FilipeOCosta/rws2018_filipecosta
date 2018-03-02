@@ -14,6 +14,8 @@
 
 #include <rws2018_msgs/MakeAPlay.h>
 
+#include <visualization_msgs/Marker.h>
+
 using namespace std;
 
 namespace rws_filipecosta
@@ -91,6 +93,8 @@ public:
   boost::shared_ptr<ros::Subscriber> sub;
   tf::Transform T; //declare the transformation object (player's pose wrt world)
 
+  boost::shared_ptr<ros::Publisher> pub;
+
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
     red_team = boost::shared_ptr<Team>(new Team("red"));
@@ -121,6 +125,9 @@ public:
 
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
+
+    pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
+    *pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
     struct timeval t1;
     gettimeofday(&t1, NULL);
@@ -153,6 +160,26 @@ public:
     //---------------------------------------
     double displacement = 6; //computed using AI
     double delta_alpha = M_PI / 2;
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "filipecosta";
+    marker.header.stamp = ros::Time();
+    marker.ns = "filipecosta";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.z = 0.3;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 0.53;
+    marker.color.g = 1.0;
+    marker.color.b = 0.13;
+    marker.text = "já foste";
+    marker.lifetime = ros::Duration(2);
+
+    //only if using a MESH_RESOURCE marker type:
+    //marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+    pub->publish(marker);
 
     //---------------------------------------
     //--- CONSTRAINS PART
