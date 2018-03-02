@@ -10,13 +10,18 @@
 
 #include <rws2018_libs/team.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <sstream>
 
 #include <rws2018_msgs/MakeAPlay.h>
 
 #include <visualization_msgs/Marker.h>
 
+#define DEFAULT_TIME 0.05
+
 using namespace std;
+using namespace ros;
+using namespace tf;
 
 namespace rws_filipecosta
 {
@@ -31,7 +36,7 @@ public:
 
   string name; // A public atribute
 
-  int setTeamName(int index = 0 /*default value*/)
+  int setTeamName(int index = 1 /*default value*/)
   {
     switch (index)
     {
@@ -94,6 +99,7 @@ public:
   tf::Transform T; //declare the transformation object (player's pose wrt world)
 
   boost::shared_ptr<ros::Publisher> pub;
+  tf::TransformListener listener;
 
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
@@ -135,6 +141,8 @@ public:
     double start_x = ((double)rand() / (double)RAND_MAX) * 10 - 5;
     double start_y = ((double)rand() / (double)RAND_MAX) * 10 - 5;
     printf("start_x=%f start_y=%f\n", start_x, start_y);
+
+    ros::Duration(0.1).sleep();
     warp(start_x, start_y, M_PI / 2);
     printReport();
   }
@@ -145,8 +153,28 @@ public:
     tf::Quaternion q;
     q.setRPY(0, 0, alfa);
     T.setRotation(q);
-    br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "moliveira"));
+    br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "filipecosta"));
     ROS_INFO("Warping to x=%f y=%f a=%f", x, y, alfa);
+  }
+
+  double getAngleToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
+  {
+    StampedTransform t; //The transform object
+    //Time now = Time::now(); //get the time
+    Time now = Time(0); //get the latest transform received
+
+    try
+    {
+      listener.waitForTransform("filipecosta", other_player, now, Duration(time_to_wait));
+      listener.lookupTransform("filipecosta", other_player, now, t);
+    }
+    catch (TransformException &ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+
+    return atan2(t.getOrigin().y(), t.getOrigin().x());
   }
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg)
@@ -159,8 +187,10 @@ public:
     //--- AI PART
     //---------------------------------------
     double displacement = 6; //computed using AI
-    double delta_alpha = M_PI / 2;
+    double delta_alpha = getAngleToPLayer("tosorio");
 
+    if (isnan(delta_alpha))
+      delta_alpha = 0;
     visualization_msgs::Marker marker;
     marker.header.frame_id = "filipecosta";
     marker.header.stamp = ros::Time();
@@ -185,7 +215,7 @@ public:
     //--- CONSTRAINS PART
     //---------------------------------------
     double displacement_max = msg->dog;
-    double displacement_with_constrains;
+    //double displacement_with_constrains;
     displacement > displacement_max ? displacement = displacement_max : displacement = displacement;
 
     double delta_alpha_max = M_PI / 30;
@@ -200,7 +230,7 @@ public:
     T = T * my_move_T;
     br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "filipecosta"));
 
-    ROS_INFO("Moving");
+    //ROS_INFO("Moving");
   }
 
   void printReport()
