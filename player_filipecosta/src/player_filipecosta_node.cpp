@@ -161,8 +161,8 @@ public:
 
     try
     {
-      listener.waitForTransform("moliveira", other_player, now, Duration(time_to_wait));
-      listener.lookupTransform("moliveira", other_player, now, t);
+      listener.waitForTransform("filipecosta", other_player, now, Duration(time_to_wait));
+      listener.lookupTransform("filipecosta", other_player, now, t);
     }
     catch (TransformException &ex)
     {
