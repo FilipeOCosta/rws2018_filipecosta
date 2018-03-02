@@ -8,11 +8,12 @@ project(player_filipecosta)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
-  rws2018_libs
-  tf
+roscpp
+rospy
+std_msgs
+rws2018_libs
+rws2018_msgs
+tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -49,11 +50,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ #add_message_files(
+   #FILES
+  # MakeAPlay.msg
+ #)
 
 ## Generate services in the 'srv' folder
 # add_service_files(

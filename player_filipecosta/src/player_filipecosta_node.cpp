@@ -11,6 +11,8 @@
 #include <tf/transform_broadcaster.h>
 #include <sstream>
 
+#include <rws2018_msgs/MakeAPlay.h>
+
 using namespace std;
 
 namespace rws_filipecosta
