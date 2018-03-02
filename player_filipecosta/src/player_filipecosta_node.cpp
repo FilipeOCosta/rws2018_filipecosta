@@ -174,7 +174,7 @@ public:
     marker.color.r = 0.53;
     marker.color.g = 1.0;
     marker.color.b = 0.13;
-    marker.text = "já foste";
+    marker.text = "ja foste";
     marker.lifetime = ros::Duration(2);
 
     //only if using a MESH_RESOURCE marker type:
