@@ -27,25 +27,25 @@ public:
     name = argin_name;
   }
 
-  string name;  // A public atribute
+  string name; // A public atribute
 
   int setTeamName(int index = 0 /*default value*/)
   {
     switch (index)
     {
-      case 0:
-        return setTeamName("red");
-        break;
-      case 1:
-        return setTeamName("green");
-        break;
-      case 2:
-        return setTeamName("blue");
-        break;
-      default:
-        // cout << "wrong team index given. Cannot set team" << endl;
-        ROS_WARN("wrong team index given. Cannot set team");
-        break;
+    case 0:
+      return setTeamName("red");
+      break;
+    case 1:
+      return setTeamName("green");
+      break;
+    case 2:
+      return setTeamName("blue");
+      break;
+    default:
+      // cout << "wrong team index given. Cannot set team" << endl;
+      ROS_WARN("wrong team index given. Cannot set team");
+      break;
     }
   }
 
@@ -86,9 +86,10 @@ public:
   boost::shared_ptr<Team> my_preys;
   boost::shared_ptr<Team> my_hunters;
 
-  tf::TransformBroadcaster br;  // declare the broadcaster
+  tf::TransformBroadcaster br; // declare the broadcaster
   ros::NodeHandle n;
   boost::shared_ptr<ros::Subscriber> sub;
+  tf::Transform T; //declare the transformation object (player's pose wrt world)
 
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
@@ -120,34 +121,57 @@ public:
 
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
+
+    struct timeval t1;
+    gettimeofday(&t1, NULL);
+    srand(t1.tv_usec);
+    double start_x = ((double)rand() / (double)RAND_MAX) * 10 - 5;
+    double start_y = ((double)rand() / (double)RAND_MAX) * 10 - 5;
+    printf("start_x=%f start_y=%f\n", start_x, start_y);
+    warp(start_x, start_y, M_PI / 2);
     printReport();
+  }
+
+  void warp(double x, double y, double alfa)
+  {
+    T.setOrigin(tf::Vector3(x, y, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, alfa);
+    T.setRotation(q);
+    br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "moliveira"));
+    ROS_INFO("Warping to x=%f y=%f a=%f", x, y, alfa);
   }
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg)
   {
-    static float y = 0;
-    static int i = 1;
-    tf::Transform transform;  // declare the transformation object
-    if (i == 1)
-    {
-      transform.setOrigin(tf::Vector3(-5, y -= 0.5, 0.0));
-      if (y == -5)
-      {
-        i = 0;
-      }
-    }
-    else
-    {
-      transform.setOrigin(tf::Vector3(-5, y += 0.5, 0.0));
-      if (y == 5)
-      {
-        i = 1;
-      }
-    }
-    tf::Quaternion q;
-    q.setRPY(0, 0, M_PI / 4);
-    transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "filipecosta"));
+    double x = T.getOrigin().x();
+    double y = T.getOrigin().y();
+    double a = 0;
+
+    //---------------------------------------
+    //--- AI PART
+    //---------------------------------------
+    double displacement = 6; //computed using AI
+    double delta_alpha = M_PI / 2;
+
+    //---------------------------------------
+    //--- CONSTRAINS PART
+    //---------------------------------------
+    double displacement_max = msg->dog;
+    double displacement_with_constrains;
+    displacement > displacement_max ? displacement = displacement_max : displacement = displacement;
+
+    double delta_alpha_max = M_PI / 30;
+    fabs(delta_alpha) > fabs(delta_alpha_max) ? delta_alpha = delta_alpha_max * delta_alpha / fabs(delta_alpha) : delta_alpha = delta_alpha;
+
+    tf::Transform my_move_T; //declare the transformation object (player's pose wrt world)
+    my_move_T.setOrigin(tf::Vector3(displacement, 0.0, 0.0));
+
+    tf::Quaternion q1;
+    q1.setRPY(0, 0, delta_alpha);
+    my_move_T.setRotation(q1);
+    T = T * my_move_T;
+    br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "filipecosta"));
 
     ROS_INFO("Moving");
   }
@@ -161,7 +185,7 @@ public:
     // ROS_ERROR("My name is %s and my team is %s", name.c_str(), (getTeamName().c_str()));
   }
 };
-}  // end of namespace
+} // end of namespace
 
 int main(int argc, char **argv)
 {
