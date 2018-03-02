@@ -4,6 +4,7 @@
 // Boost includes
 #include <boost/shared_ptr.hpp>
 
+// ROS includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
@@ -26,23 +27,25 @@ public:
     name = argin_name;
   }
 
+  string name; // A public atribute
+
   int setTeamName(int index = 0 /*default value*/)
   {
     switch (index)
     {
-      case 0:
-        return setTeamName("red");
-        break;
-      case 1:
-        return setTeamName("green");
-        break;
-      case 2:
-        return setTeamName("blue");
-        break;
-      default:
-        // cout << "wrong team index given. Cannot set team" << endl;
-        ROS_WARN("wrong team index given. Cannot set team");
-        break;
+    case 0:
+      return setTeamName("red");
+      break;
+    case 1:
+      return setTeamName("green");
+      break;
+    case 2:
+      return setTeamName("blue");
+      break;
+    default:
+      // cout << "wrong team index given. Cannot set team" << endl;
+      ROS_WARN("wrong team index given. Cannot set team");
+      break;
     }
   }
 
@@ -57,8 +60,8 @@ public:
     else
     {
       // cout << "cannot set team name to " << argin_team << endl;
-      ROS_WARN("cannot set team name to ");
-      return 0;
+      ROS_ERROR("cannot set team name to %s", argin_team.c_str());
+      ros::shutdown();
     }
   }
 
@@ -67,8 +70,6 @@ public:
   {
     return team_name;
   }
-
-  string name;  // A public atribute
 
 private:
   string team_name;
@@ -85,7 +86,9 @@ public:
   boost::shared_ptr<Team> my_preys;
   boost::shared_ptr<Team> my_hunters;
 
-  tf::TransformBroadcaster br;  // declare the broadcaster
+  tf::TransformBroadcaster br; // declare the broadcaster
+  ros::NodeHandle n;
+  boost::shared_ptr<ros::Subscriber> sub;
 
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
@@ -115,17 +118,22 @@ public:
       setTeamName("blue");
     }
 
+    sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
+    *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
     printReport();
   }
 
-  void move()
+  void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg)
   {
-    tf::Transform transform;  // declare the transformation object
-    transform.setOrigin(tf::Vector3(-8, -8, 0.0));
+    static float y = 0;
+    tf::Transform transform; // declare the transformation object
+    transform.setOrigin(tf::Vector3(-8, y += 0.5, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, M_PI / 4);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "filipecosta"));
+
+    ROS_INFO("Moving");
   }
 
   void printReport()
@@ -137,7 +145,7 @@ public:
     // ROS_ERROR("My name is %s and my team is %s", name.c_str(), (getTeamName().c_str()));
   }
 };
-}  // end of namespace
+} // end of namespace
 
 int main(int argc, char **argv)
 {
@@ -155,22 +163,20 @@ int main(int argc, char **argv)
 
   rws_filipecosta::MyPlayer my_player("filipecosta", "green");
 
-  if (my_player.red_team->playerBelongsToTeam("filipecosta"))
-  {
-    // cout << "o filipe esta na equipa certa" << endl;
-    ROS_INFO("o filipe esta na equipa certa");
-  };
+  //if (my_player.red_team->playerBelongsToTeam("filipecosta"))
+  //{
+  // cout << "o filipe esta na equipa certa" << endl;
+  // ROS_INFO("o filipe esta na equipa certa");
+  //};
 
-  // ros::NodeHandle node;
+  //ros::Rate loop_rate(10);
+  //while (ros::ok())
+  //{
+  // my_player.move();
 
-  ros::Rate loop_rate(10);
-  while (ros::ok())
-  {
-    my_player.move();
-
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
+  //ros::spinOnce();
+  //loop_rate.sleep();
+  //}
 
   ros::spin();
 }
