@@ -4,18 +4,14 @@
 // Boost includes
 #include <boost/shared_ptr.hpp>
 
-// ROS includes
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-
+// Ros includes
+#include <ros/ros.h>
 #include <rws2018_libs/team.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <sstream>
+#include <visualization_msgs/Marker.h>
 
 #include <rws2018_msgs/MakeAPlay.h>
-
-#include <visualization_msgs/Marker.h>
 
 #define DEFAULT_TIME 0.05
 
@@ -25,6 +21,7 @@ using namespace tf;
 
 namespace rws_filipecosta
 {
+
 class Player
 {
 public:
@@ -55,7 +52,6 @@ public:
       break;
     }
   }
-
   // Set team name, if given a correct team name (accessor)
   int setTeamName(string argin_team)
   {
@@ -97,7 +93,6 @@ public:
   ros::NodeHandle n;
   boost::shared_ptr<ros::Subscriber> sub;
   tf::Transform T; //declare the transformation object (player's pose wrt world)
-
   boost::shared_ptr<ros::Publisher> pub;
   tf::TransformListener listener;
 
@@ -144,6 +139,7 @@ public:
 
     ros::Duration(0.1).sleep();
     warp(start_x, start_y, M_PI / 2);
+
     printReport();
   }
 
@@ -155,6 +151,26 @@ public:
     T.setRotation(q);
     br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "filipecosta"));
     ROS_INFO("Warping to x=%f y=%f a=%f", x, y, alfa);
+  }
+
+  double getDistanceToPlayer(string other_player, double time_to_wait = DEFAULT_TIME)
+  {
+    StampedTransform t; //The transform object
+    //Time now = Time::now(); //get the time
+    Time now = Time(0); //get the latest transform received
+
+    try
+    {
+      listener.waitForTransform("moliveira", other_player, now, Duration(time_to_wait));
+      listener.lookupTransform("moliveira", other_player, now, t);
+    }
+    catch (TransformException &ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+
+    return sqrt(t.getOrigin().y() * t.getOrigin().y() + t.getOrigin().x() * t.getOrigin().x());
   }
 
   double getAngleToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
@@ -186,11 +202,28 @@ public:
     //---------------------------------------
     //--- AI PART
     //---------------------------------------
-    double displacement = 6; //computed using AI
-    double delta_alpha = getAngleToPLayer("tosorio");
 
+    //Find nearest prey (player_to_hunt will be the nearest prey player)
+    double min_distance = 99999;
+    string player_to_hunt = "no player";
+    for (size_t i = 0; i < my_preys->player_names.size(); i++)
+    {
+      double dist = getDistanceToPlayer(my_preys->player_names[i]);
+      if (isnan(dist))
+      {
+      }
+      else if (dist < min_distance)
+      {
+        min_distance = dist;
+        player_to_hunt = my_preys->player_names[i];
+      }
+    }
+
+    double displacement = 6; //computed using AI
+    double delta_alpha = getAngleToPLayer(player_to_hunt);
     if (isnan(delta_alpha))
       delta_alpha = 0;
+
     visualization_msgs::Marker marker;
     marker.header.frame_id = "filipecosta";
     marker.header.stamp = ros::Time();
@@ -201,10 +234,10 @@ public:
     marker.pose.orientation.w = 1.0;
     marker.scale.z = 0.3;
     marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 0.53;
-    marker.color.g = 1.0;
-    marker.color.b = 0.13;
-    marker.text = "ja foste";
+    marker.color.r = 1;
+    marker.color.g = 0;
+    marker.color.b = 0;
+    marker.text = "ja foste " + player_to_hunt;
     marker.lifetime = ros::Duration(2);
 
     //only if using a MESH_RESOURCE marker type:
@@ -227,6 +260,7 @@ public:
     tf::Quaternion q1;
     q1.setRPY(0, 0, delta_alpha);
     my_move_T.setRotation(q1);
+
     T = T * my_move_T;
     br.sendTransform(tf::StampedTransform(T, ros::Time::now(), "world", "filipecosta"));
 
