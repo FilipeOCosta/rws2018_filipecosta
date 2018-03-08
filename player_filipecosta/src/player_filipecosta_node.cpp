@@ -158,8 +158,8 @@ public:
   {
     ROS_WARN("I am %s and I am responding to a service request!", name.c_str());
 
-    res.resposta = "banana";
-    return true;
+    res.resposta = "banana  ";
+    //return true;
   }
 
   void warp(double x, double y, double alfa)
