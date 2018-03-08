@@ -14,6 +14,8 @@
         "*.ipp": "cpp",
         "array": "cpp",
         "slist": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "iostream": "cpp",
+        "vector": "cpp"
     }
 }
