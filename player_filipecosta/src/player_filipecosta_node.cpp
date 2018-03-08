@@ -13,12 +13,13 @@
 #include <visualization_msgs/Marker.h> //Messages on sreen
 
 #include <rws2018_msgs/MakeAPlay.h>
+#include <rws2018_msgs/GameQuery.h>
 
 #define DEFAULT_TIME 0.05
 
 using namespace ros;
-
 using namespace std;
+using namespace tf;
 
 namespace rws_filipecosta
 {
@@ -95,7 +96,9 @@ public:
   boost::shared_ptr<ros::Subscriber> sub; // declare the subscriver
   tf::Transform transform;                // declare the transformation object (player's pose wrt world)
   boost::shared_ptr<ros::Publisher> pub;  // declare the publisher
-  tf::TransformListener listener;         // declare listener
+  boost::shared_ptr<ros::ServiceServer> game_query_srv;
+
+  tf::TransformListener listener; // declare listener
 
   MyPlayer(string argin_name, string argin_team) : Player(argin_name)
   {
@@ -125,7 +128,7 @@ public:
       setTeamName("blue");
     }
 
-    setTeamName(argin_team);
+    //setTeamName(argin_team);
 
     // Message subscriver
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
@@ -134,6 +137,9 @@ public:
     // Message publisher
     pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
     *pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
+
+    game_query_srv = boost::shared_ptr<ros::ServiceServer>(new ros::ServiceServer());
+    *game_query_srv = n.advertiseService("/" + name + "/game_query", &MyPlayer::respondToGameQuery, this);
 
     // Starting point
     struct timeval t1;
@@ -145,6 +151,15 @@ public:
     warp(start_x, start_y, M_PI / 2);
 
     PrintReport();
+  }
+
+  bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
+                          rws2018_msgs::GameQuery::Response &res)
+  {
+    ROS_WARN("I am %s and I am responding to a service request!", name.c_str());
+
+    res.resposta = "banana";
+    return true;
   }
 
   void warp(double x, double y, double alfa)
