@@ -7,13 +7,20 @@
 
 // Ros includes
 #include <ros/ros.h>
-#include <rws2018_libs/team.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h> //Messages on sreen
-
+#include <rws2018_libs/team.h>
 #include <rws2018_msgs/MakeAPlay.h>
 #include <rws2018_msgs/GameQuery.h>
+#include <sensor_msgs/PointCloud2.h>
+
+// PCL includes
+//#include <pcl_conversions/pcl_conversions.h>
+//#include <pcl/point_types.h>
+//#include <pcl/PCLPointCloud2.h>
+//#include <pcl/conversions.h>
+//#include <pcl_ros/transforms.h>
 
 #define DEFAULT_TIME 0.05
 
@@ -32,7 +39,7 @@ public:
     this->name = name;
   }
 
-  int setTeamName(int team_index = 0 /*default value*/)
+  int setTeamName(int team_index = 1 /*default value*/)
   {
     switch (team_index)
     {
@@ -93,9 +100,10 @@ public:
 
   tf::TransformBroadcaster br; // declare the broadcaster
   ros::NodeHandle n;
-  boost::shared_ptr<ros::Subscriber> sub; // declare the subscriver
-  tf::Transform transform;                // declare the transformation object (player's pose wrt world)
-  boost::shared_ptr<ros::Publisher> pub;  // declare the publisher
+  boost::shared_ptr<ros::Subscriber> sub;           // declare the subscriver
+  boost::shared_ptr<ros::Subscriber> subPointCloud; // declare the subscriver
+  tf::Transform transform;                          // declare the transformation object (player's pose wrt world)
+  boost::shared_ptr<ros::Publisher> pub;            // declare the publisher
   boost::shared_ptr<ros::ServiceServer> game_query_srv;
 
   tf::TransformListener listener; // declare listener
@@ -134,6 +142,9 @@ public:
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
 
+    subPointCloud = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
+    *subPointCloud = n.subscribe("/object_point_cloud", 1, &MyPlayer::processPointCloud, this);
+
     // Message publisher
     pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
     *pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
@@ -153,8 +164,7 @@ public:
     PrintReport();
   }
 
-  bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
-                          rws2018_msgs::GameQuery::Response &res)
+  bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req, rws2018_msgs::GameQuery::Response &res)
   {
     ROS_WARN("I am %s and I am responding to a service request!", name.c_str());
 
@@ -272,6 +282,14 @@ public:
     }
 
     return false;
+  }
+
+  void processPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
+  {
+    ROS_INFO("!!!!!!!!!!! Recibed PointCloud !!!!!!!!!!!!");
+
+    //pcl::PCLPointCloud2 pcl_pc2;
+    //pcl_conversions::toPCL(*msg.pcl_pc2);
   }
 
   // Function to execute de movement
